@@ -101,23 +101,32 @@
   <ItemGroup>
     <ClInclude Include="DialogCurrentPro.h" />
     <ClInclude Include="DialogFinishedPro.h" />
+    <ClInclude Include="DialogNewTask.h" />
+    <ClInclude Include="DialogSettings.h" />
+    <ClInclude Include="LinkedList.h" />
     <ClInclude Include="ListViewCurrentPro.h" />
+    <ClInclude Include="PCB.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TaskManager.h" />
     <ClInclude Include="TaskManagerMainDlg.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DialogCurrentPro.cpp" />
     <ClCompile Include="DialogFinishedPro.cpp" />
+    <ClCompile Include="DialogNewTask.cpp" />
+    <ClCompile Include="DialogSettings.cpp" />
     <ClCompile Include="ListViewCurrentPro.cpp" />
+    <ClCompile Include="PCB.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TaskManager.cpp" />
     <ClCompile Include="TaskManagerMainDlg.cpp" />
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TaskManager.rc" />

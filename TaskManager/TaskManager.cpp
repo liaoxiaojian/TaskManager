@@ -10,7 +10,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // TaskManagerMain
 
 BEGIN_MESSAGE_MAP(TaskManagerMain, CWinApp)
@@ -28,11 +27,9 @@ TaskManagerMain::TaskManagerMain()
 
 
 // 唯一的一个 TaskManagerMain 对象
-
 TaskManagerMain theApp;
 
 // TaskManagerMain 初始化
-
 BOOL TaskManagerMain::InitInstance()
 {
 	CWinApp::InitInstance();

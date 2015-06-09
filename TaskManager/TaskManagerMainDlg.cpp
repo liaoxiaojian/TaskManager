@@ -46,20 +46,28 @@ TaskManagerMainDlg::TaskManagerMainDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(TaskManagerMainDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	
+	//初始化链表
+	mFinishedProcess = LinkedList<PCB*>();
+	
 }
 
 void TaskManagerMainDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, Tab_Current_Pro, tabControl);
+	DDX_Control(pDX, Main_Button_New_Task, buttonNewTask);
+	DDX_Control(pDX, Main_Text_Cpu_Info, CPURunTimeTextCtrl);
 }
 
 BEGIN_MESSAGE_MAP(TaskManagerMainDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
+	ON_WM_TIMER()
 	ON_WM_QUERYDRAGICON()
 	ON_NOTIFY(TCN_SELCHANGE, Tab_Current_Pro, &TaskManagerMainDlg::OnTcnSelchange)
 	ON_BN_CLICKED(Main_Button_Settings, &TaskManagerMainDlg::OnBnClickedButtonSettings)
+	ON_BN_CLICKED(Main_Button_New_Task, &TaskManagerMainDlg::OnBnClickedButtonNewTask)
 END_MESSAGE_MAP()
 
 // TaskManagerMainDlg 消息处理程序
@@ -109,6 +117,8 @@ BOOL TaskManagerMainDlg::OnInitDialog()
 	//设置显示
 	mDialogCurrenPro.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_SHOWWINDOW);
 	mDialogFinishedPro.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+
+	SetTimer(PERIOD_TASK, timeSlot, NULL);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -183,8 +193,57 @@ void TaskManagerMainDlg::OnTcnSelchange(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 }
 
+//设置按钮点击后
 void TaskManagerMainDlg::OnBnClickedButtonSettings()
 {
-	//设置按钮被点击后
-	MessageBox(TEXT("您点击了设置按钮"));
+	int nRet = mDialogSettings.DoModal();
+	if (nRet == IDOK)
+	{
+		//更改相应的参数
+		timeSlot = Util::CStringToInt(mDialogSettings.mSNum);
+		continueRunTimeSlots = Util::CStringToInt(mDialogSettings.continueRunTimeSlots);
+		decPriority = Util::CStringToInt(mDialogSettings.decPriority);
+		incPriority = Util::CStringToInt(mDialogSettings.incPriority);
+		tmp = continueRunTimeSlots;
+
+		KillTimer(PERIOD_TASK);
+		SetTimer(PERIOD_TASK, timeSlot, NULL);
+	}
 }
+
+//新建任务按钮被点击后
+void TaskManagerMainDlg::OnBnClickedButtonNewTask()
+{
+	INT_PTR nRet = mDialogNewTask.DoModal();
+	if (nRet == IDOK){
+		int size = mDialogNewTask.newTaskList.size();
+		for (int i = 0; i < size; i++){
+			//数据传递，新任务进入就绪队列等待
+			mDialogNewTask.newTaskList.get(0)->enterTime = CPURunTime;
+			mDialogCurrenPro.mReadyProcess.add(mDialogNewTask.newTaskList.shift());
+		}
+	}
+	
+	//更新数据信息，并初始化一些变量
+	mDialogCurrenPro.NotifyDataSetChange();
+	mDialogNewTask.ClearAll();
+}
+
+//周期性函数
+void TaskManagerMainDlg::OnTimer(UINT_PTR nIDEvent){
+	if (nIDEvent == PERIOD_TASK){
+
+		CString str;
+		str.Format(_T("CPU已连续运行%d个时间片"), CPURunTime++);
+		CPURunTimeTextCtrl.SetWindowTextW(str);
+		
+		tmp--;
+		mDialogCurrenPro.Execute(decPriority, incPriority,tmp);//在此方法里判断是否需要更换进程运行
+		if (tmp < 0){//重置时间片计数器
+			tmp = continueRunTimeSlots;
+		}
+
+	}
+}
+
+
