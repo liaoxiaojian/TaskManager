@@ -22,3 +22,11 @@ CString  Util::IntToCString(int a)
 int Util::CStringToInt(CString str){
 	return _ttoi(str);
 }
+
+CString Util::DoubleToCString(double a){
+	CString str;
+	str.Format(_T("%f"), a);
+	return str;
+}
+
+

@@ -17,7 +17,13 @@ DialogCurrentPro::DialogCurrentPro(CWnd* pParent /*=NULL*/)
 {
 	//初始化链表 
 	mReadyProcess = LinkedList<PCB*>();
-	
+	currentProHead = PCB::GetCurrentProInfoHead();
+	readyProHead = PCB::GetReadyProInfoHead();
+
+	file.Open(strTime+".txt", CFile::modeCreate | CFile::modeReadWrite);
+	unsigned short int feff = 0xfeff;
+	file.Write(&feff, sizeof(short int));//写入文件头
+	file.Write(_T("任务管理日志:\r\n"), 18);
 }
 
 DialogCurrentPro::~DialogCurrentPro()
@@ -31,6 +37,7 @@ void DialogCurrentPro::DoDataExchange(CDataExchange* pDX)
 	//Called by the framework to exchange and validate dialog data.大意是框架调用此函数来改写与确认对话框数据。
 	DDX_Control(pDX, List_Current_Pro, ListCurrentProCtrl);
 	DDX_Control(pDX, List_Pro_Queue, ListProQCtrl);
+
 }
 
 BEGIN_MESSAGE_MAP(DialogCurrentPro, CDialogEx)
@@ -78,9 +85,9 @@ BOOL DialogCurrentPro::OnInitDialog()
 void DialogCurrentPro::NotifyDataSetChange()
 {
 	int size = this->mReadyProcess.size();
+	ListProQCtrl.SetRedraw(FALSE);
 	ListProQCtrl.DeleteAllItems();
 	for (int i = 0;i<size ; i++){
-
 		PCB *pcb = this->mReadyProcess.get(i);
 		ListProQCtrl.InsertItem(i, Util::IntToCString(pcb->pid));
 		ListProQCtrl.SetItemText(i, 1, pcb->id);
@@ -92,30 +99,36 @@ void DialogCurrentPro::NotifyDataSetChange()
 		ListProQCtrl.SetItemText(i, 7, Util::IntToCString(pcb->readyTime));
 		ListProQCtrl.SetItemText(i, 8, pcb->getState());
 	}
+	ListProQCtrl.SetRedraw(TRUE);
+	ListProQCtrl.Invalidate();
+	ListProQCtrl.UpdateWindow();
 }
 
 // CPU开始模拟进程调度算法
-void DialogCurrentPro::Execute(int decPriority,int incPriority,int runSlots)
+PCB* DialogCurrentPro::Execute(int decPriority,int incPriority,int cpuRunTime)
 {
-	
+	PCB *finishedPCB = NULL;
 	if (ListCurrentProCtrl.GetItemCount() == 0){//若CPU空闲,选择优先级最高的进程执行
 		int position = GetCandidatePos();
-		if (mReadyProcess.get(0) == NULL||position < 0)  return;//就绪列表为空
+		if (mReadyProcess.get(0) == NULL || position < 0)  {
+			tmp = continueRunTimeSlots;
+			return finishedPCB;//就绪列表为空，当前无运行任务
+		}
 		mCurrentProcess = mReadyProcess.remove(position);
 		mCurrentProcess->state = RUNNING;
 	}
-	//更新视图
-	UpdateListCPRO();
-	UpdateListReady();
 
-	if (runSlots >= 0){//连续执行时间片没用完
-		UpdateCurrentPro(decPriority);
+	if (tmp-- > 0){//连续执行时间片没用完,继续执行下个时间片
+		finishedPCB = UpdateCurrentPro(decPriority);
 		UpdateReadyPro(incPriority);
-		return;//继续执行下个时间片
+		//更新视图
+		UpdateListCPRO();
+		UpdateListReady();
 	}
 	else//连续时间片用完，则需要选择新进程运行 
 	{
-		if (mCurrentProcess == NULL) return;
+		tmp = continueRunTimeSlots-1;
+		if (mCurrentProcess == NULL) return finishedPCB;
 		int tmpPid = mCurrentProcess->pid;//保存上个运行进程的pid
 		
 		//正在运行进程进入就绪队列
@@ -127,16 +140,29 @@ void DialogCurrentPro::Execute(int decPriority,int incPriority,int runSlots)
 		int pos = GetCandidatePos();
 		mCurrentProcess = mReadyProcess.remove(pos);
 		mCurrentProcess->state = RUNNING;
+
 		if (mCurrentProcess->pid != tmpPid)//若下个运行的进程和上个一样，则连续运行时间不变
 		{
-			mCurrentProcess->runTime = 0;//连续运行时间重置
-			mCurrentProcess->readyTime = 0;//就绪时间请0
-			UpdateCurrentPro(decPriority);
-			UpdateReadyPro(incPriority);
+			mCurrentProcess->runTime = 0;//连续运行时间清0
+			mCurrentProcess->readyTime = 0;//就绪时间清0
 		}
-		
+		finishedPCB =UpdateCurrentPro(decPriority);
+		UpdateReadyPro(incPriority);
+		//更新视图
+		UpdateListCPRO();
+		UpdateListReady();
+	}
+
+	//文件读写
+	if (mCurrentProcess != NULL){
+		WriteCurrentProToFile(cpuRunTime);
+		file.Write(_T("\r\n"), 4);
+		WriteReadyProToFile();
+		file.Write(_T("\r\n"), 4);
+		file.Flush();
 	}
 	
+	return finishedPCB;
 }
 
 // 获取从就绪队列进入运行队列的候选任务位置
@@ -155,28 +181,39 @@ int DialogCurrentPro::GetCandidatePos()
 	return returnValue;
 }
 
-// 更新当前进程
-void DialogCurrentPro::UpdateCurrentPro(int decPriority)
+// 更新当前进程,返回完成的进场，若无，则返回NULL
+PCB* DialogCurrentPro::UpdateCurrentPro(int decPriority)
 {
-	if (mCurrentProcess == NULL) return;
-	//更新运行进程信息
-	mCurrentProcess->usedTime++;//已运行时间增加 
-	mCurrentProcess->runTime++;//连续运行时间
-	if (--mCurrentProcess->allTime == 0)//运行完成
+	PCB* pcb = NULL;
+	if (mCurrentProcess == NULL) return pcb;
+	if (--mCurrentProcess->allTime <= 0)//运行完成
 	{
+		mCurrentProcess->usedTime++;//已运行时间增加 
+		mCurrentProcess->runTime++;//连续运行时间
 		mCurrentProcess->state = FINISHED;
+
+		pcb = mCurrentProcess;
+
+		//选择下一个进程
 		int pos = GetCandidatePos();
 		mCurrentProcess = mReadyProcess.remove(pos);
-		if (mCurrentProcess == NULL) return;
+		if (mCurrentProcess == NULL) return pcb;
+		mCurrentProcess->state = RUNNING;
 	}
-	if (mCurrentProcess->priority - decPriority < 0)
+	else//未运行完成,更新进程信息
 	{
-		mCurrentProcess->priority = 0;//优先级不能低于0
+		if (mCurrentProcess->priority - decPriority < 0)
+		{
+			mCurrentProcess->priority = 0;//优先级不能低于0
+		}
+		else
+		{
+			mCurrentProcess->priority -= decPriority;//正在运行进程优先级减少
+		}
+		mCurrentProcess->usedTime++;//已运行时间增加 
+		mCurrentProcess->runTime++;//连续运行时间
 	}
-	else
-	{
-		mCurrentProcess->priority -= decPriority;//正在运行进程优先级减少
-	}
+	return pcb;
 }
 
 // 更新就绪队列
@@ -184,6 +221,7 @@ void DialogCurrentPro::UpdateReadyPro(int incPriority)
 {
 	int sizeA = mReadyProcess.size();
 	for (int i = 0; i < sizeA; i++){
+
 		if (mReadyProcess.get(i)->priority + incPriority>40){
 			mReadyProcess.get(i)->priority = 40;//优先级增加，但不能大于40 
 		}
@@ -191,6 +229,7 @@ void DialogCurrentPro::UpdateReadyPro(int incPriority)
 		{
 			mReadyProcess.get(i)->priority += incPriority;
 		}
+
 		mReadyProcess.get(i)->readyTime++;//连续就绪时间增加
 	}
 }
@@ -198,6 +237,8 @@ void DialogCurrentPro::UpdateReadyPro(int incPriority)
 // 更新当前进程列表
 void DialogCurrentPro::UpdateListCPRO()
 {
+	ListCurrentProCtrl.SetRedraw(FALSE);
+	//更新内容
 	ListCurrentProCtrl.DeleteAllItems();
 	if (mCurrentProcess == NULL) return;
 	ListCurrentProCtrl.InsertItem(0, Util::IntToCString(mCurrentProcess->pid));
@@ -209,6 +250,9 @@ void DialogCurrentPro::UpdateListCPRO()
 	ListCurrentProCtrl.SetItemText(0, 6, Util::IntToCString(mCurrentProcess->usedTime));
 	ListCurrentProCtrl.SetItemText(0, 7, Util::IntToCString(mCurrentProcess->runTime));
 	ListCurrentProCtrl.SetItemText(0, 8, mCurrentProcess->getState());
+	ListCurrentProCtrl.SetRedraw(TRUE);
+	ListCurrentProCtrl.Invalidate();
+	ListCurrentProCtrl.UpdateWindow();
 }
 
 
@@ -217,3 +261,124 @@ void DialogCurrentPro::UpdateListReady()
 {
 	NotifyDataSetChange();
 }
+
+void DialogCurrentPro::WriteCurrentProToFile(int cpuRunTime){
+	CString cpuState;
+	cpuState.Format(_T("第%d个时间片:\r\n"), cpuRunTime);
+	file.Write(cpuState, cpuState.GetLength() << 1);
+	file.Write(_T("CPU进程:\r\n"), 16);
+	file.Write(currentProHead, currentProHead.GetLength() << 1);
+	int position = file.GetLength();//获取每一行的开头位置
+	int length = currentProHead.GetLength();
+	//file.Write(currentProHead, currentProHead.GetLength() << 1);
+	for (int i = 0; i <length; i++){
+		file.Write(_T(" "), 2);
+	}
+	//写pid
+	position += 4 << 1;
+	file.Seek(position, CFile::begin);
+	CString pid = mCurrentProcess->GetFormatPid();
+	file.Write(pid, pid.GetLength() << 1);
+	//写进程名
+	position += 6 << 1;
+	file.Seek(position, CFile::begin);
+	CString id = mCurrentProcess->GetFormatId();
+	file.Write(id, id.GetLength() << 1);
+	//写用户名
+	position += 6 << 1;
+	file.Seek(position, CFile::begin);
+	CString userName = mCurrentProcess->GetFormatUserName();
+	file.Write(userName, userName.GetLength() << 1);
+	//写优先级
+	position += 6 << 1;
+	file.Seek(position, CFile::begin);
+	CString priority = mCurrentProcess->GetFormatPriority();
+	file.Write(priority, priority.GetLength() << 1);
+	//写进入时间
+	position += 6 << 1;
+	file.Seek(position, CFile::begin);
+	CString enterTime = mCurrentProcess->GetFormatEnterTime();
+	file.Write(enterTime, enterTime.GetLength() << 1);
+	//写所需时间
+	position += 7 << 1;
+	file.Seek(position, CFile::begin);
+	CString allTime = mCurrentProcess->GetFormatAllTime();
+	file.Write(allTime, allTime.GetLength() << 1);
+	//写已运行时间
+	position += 7 << 1;
+	file.Seek(position, CFile::begin);
+	CString usedTime = mCurrentProcess->GetFormatUsedTime();
+	file.Write(usedTime, usedTime.GetLength() << 1);
+	//写连续运行时间
+	position += 8 << 1;
+	file.Seek(position, CFile::begin);
+	CString runTime = mCurrentProcess->GetFormatRunTime();
+	file.Write(runTime, runTime.GetLength() << 1);
+}
+
+void DialogCurrentPro::WriteReadyProToFile(){
+	CString head = _T("等待进程:\r\n");
+	int b = file.GetLength();
+	file.Write(head,head.GetLength()<<1);
+	file.Write(readyProHead, readyProHead.GetLength() << 1);
+	int length = readyProHead.GetLength();
+	int size = mReadyProcess.size();
+	for (int i = 0; i < size; i++){
+		PCB* readyPro = mReadyProcess.get(i);
+		int position = file.GetLength();//获取每一行的开头位置
+		for (int j = 0; j<length; j++){
+			file.Write(_T(" "), 2);
+		}
+		//写pid
+		position += 4 << 1;
+		file.Seek(position, CFile::begin);
+		CString pid = readyPro->GetFormatPid();
+		file.Write(pid, pid.GetLength() << 1);
+		//写进程名
+		position += 6 << 1;
+		file.Seek(position, CFile::begin);
+		CString id = readyPro->GetFormatId();
+		file.Write(id, id.GetLength() << 1);
+		//写用户名
+		position += 6 << 1;
+		file.Seek(position, CFile::begin);
+		CString userName = readyPro->GetFormatUserName();
+		file.Write(userName, userName.GetLength() << 1);
+		//写优先级
+		position += 6 << 1;
+		file.Seek(position, CFile::begin);
+		CString priority = readyPro->GetFormatPriority();
+		file.Write(priority, priority.GetLength() << 1);
+		//写进入时间
+		position += 6 << 1;
+		file.Seek(position, CFile::begin);
+		CString enterTime = readyPro->GetFormatEnterTime();
+		file.Write(enterTime, enterTime.GetLength() << 1);
+		//写所需时间
+		position += 7 << 1;
+		file.Seek(position, CFile::begin);
+		CString allTime = readyPro->GetFormatAllTime();
+		file.Write(allTime, allTime.GetLength() << 1);
+		//写已运行时间
+		position += 7 << 1;
+		file.Seek(position, CFile::begin);
+		CString usedTime = readyPro->GetFormatUsedTime();
+		file.Write(usedTime, usedTime.GetLength() << 1);
+		//写连续等待时间
+		position += 8 << 1;
+		file.Seek(position, CFile::begin);
+		CString readyTime = readyPro->GetFormatReadyTime();
+		file.Write(readyTime, readyTime.GetLength() << 1);
+
+		CString end = _T("\r\n");
+		file.Write(end,end.GetLength()<<1);
+	}
+}
+
+
+BOOL DialogCurrentPro::DestroyWindow()
+{
+	file.Close();
+	return CDialogEx::DestroyWindow();
+}
+

@@ -74,8 +74,8 @@ void DialogNewTask::AddItemToList()
 	allTimeCtrl.GetWindowTextW(allTime);
 
 	//默认生成
-	if (userName == "") userName = "默认用户";
-	if (id == "")  id = "默认进程";
+	if (userName == "") userName = CString("用户")+Util::IntToCString(pid);
+	if (id == "")  id = CString("进程")+Util::IntToCString(pid);
 	if (priority == "") {
 		int a = PCB::GeneratePriority();
 		priority = Util::IntToCString(a);

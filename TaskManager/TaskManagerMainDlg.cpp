@@ -47,9 +47,11 @@ TaskManagerMainDlg::TaskManagerMainDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	
-	//初始化链表
-	mFinishedProcess = LinkedList<PCB*>();
-	
+	//初始化参数
+	CPURunTime = 0;
+	mDialogCurrenPro.continueRunTimeSlots = continueRunTimeSlots;
+	mDialogCurrenPro.tmp = continueRunTimeSlots;
+
 }
 
 void TaskManagerMainDlg::DoDataExchange(CDataExchange* pDX)
@@ -58,6 +60,8 @@ void TaskManagerMainDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, Tab_Current_Pro, tabControl);
 	DDX_Control(pDX, Main_Button_New_Task, buttonNewTask);
 	DDX_Control(pDX, Main_Text_Cpu_Info, CPURunTimeTextCtrl);
+	DDX_Control(pDX, Main_Button_Stop_CPU, buttonCPUCtrl);
+	DDX_Control(pDX, Main_Button_Step_In, buttonStepInCtrl);
 }
 
 BEGIN_MESSAGE_MAP(TaskManagerMainDlg, CDialogEx)
@@ -68,6 +72,8 @@ BEGIN_MESSAGE_MAP(TaskManagerMainDlg, CDialogEx)
 	ON_NOTIFY(TCN_SELCHANGE, Tab_Current_Pro, &TaskManagerMainDlg::OnTcnSelchange)
 	ON_BN_CLICKED(Main_Button_Settings, &TaskManagerMainDlg::OnBnClickedButtonSettings)
 	ON_BN_CLICKED(Main_Button_New_Task, &TaskManagerMainDlg::OnBnClickedButtonNewTask)
+	ON_BN_CLICKED(Main_Button_Stop_CPU, &TaskManagerMainDlg::OnBnClickedButtonStopCpu)
+	ON_BN_CLICKED(Main_Button_Step_In, &TaskManagerMainDlg::OnBnClickedButtonStepIn)
 END_MESSAGE_MAP()
 
 // TaskManagerMainDlg 消息处理程序
@@ -204,7 +210,8 @@ void TaskManagerMainDlg::OnBnClickedButtonSettings()
 		continueRunTimeSlots = Util::CStringToInt(mDialogSettings.continueRunTimeSlots);
 		decPriority = Util::CStringToInt(mDialogSettings.decPriority);
 		incPriority = Util::CStringToInt(mDialogSettings.incPriority);
-		tmp = continueRunTimeSlots;
+		mDialogCurrenPro.continueRunTimeSlots = continueRunTimeSlots;
+		mDialogCurrenPro.tmp = continueRunTimeSlots;
 
 		KillTimer(PERIOD_TASK);
 		SetTimer(PERIOD_TASK, timeSlot, NULL);
@@ -223,27 +230,53 @@ void TaskManagerMainDlg::OnBnClickedButtonNewTask()
 			mDialogCurrenPro.mReadyProcess.add(mDialogNewTask.newTaskList.shift());
 		}
 	}
-	
 	//更新数据信息，并初始化一些变量
-	mDialogCurrenPro.NotifyDataSetChange();
 	mDialogNewTask.ClearAll();
+	mDialogCurrenPro.NotifyDataSetChange();
 }
 
 //周期性函数
 void TaskManagerMainDlg::OnTimer(UINT_PTR nIDEvent){
 	if (nIDEvent == PERIOD_TASK){
-
-		CString str;
-		str.Format(_T("CPU已连续运行%d个时间片"), CPURunTime++);
-		CPURunTimeTextCtrl.SetWindowTextW(str);
-		
-		tmp--;
-		mDialogCurrenPro.Execute(decPriority, incPriority,tmp);//在此方法里判断是否需要更换进程运行
-		if (tmp < 0){//重置时间片计数器
-			tmp = continueRunTimeSlots;
-		}
-
+		Execute();
 	}
 }
 
+//cpu运转控制
+void TaskManagerMainDlg::OnBnClickedButtonStopCpu()
+{
+	if (++clickTimes % 2 == 1)//终止运行
+	{
+		buttonCPUCtrl.SetWindowTextW(_T("启动CPU"));
+		buttonStepInCtrl.EnableWindow(TRUE);
+		KillTimer(PERIOD_TASK);
+	}
+	else
+	{
+		buttonCPUCtrl.SetWindowTextW(_T("终止CPU"));
+		buttonStepInCtrl.EnableWindow(FALSE);
+		SetTimer(PERIOD_TASK, timeSlot, NULL);
+	}
+}
 
+//步进按钮点击
+void TaskManagerMainDlg::OnBnClickedButtonStepIn()
+{
+	if (clickTimes % 2 == 1){
+		Execute();
+	}
+}
+
+void TaskManagerMainDlg::Execute(){
+	CString str;
+	str.Format(_T("CPU已连续运行%d个时间片"), CPURunTime++);
+	CPURunTimeTextCtrl.SetWindowTextW(str);
+	PCB * finishedPCB;
+	finishedPCB = mDialogCurrenPro.Execute(decPriority, incPriority, CPURunTime);
+	if (finishedPCB != NULL){
+		finishedPCB->endTime = CPURunTime;
+		finishedPCB->calRightTime();
+		mDialogFinishedPro.mFinishedProcess.add(finishedPCB);
+		mDialogFinishedPro.NotifyDataSetChange();
+	}
+}

@@ -32,7 +32,7 @@ public:
 	// 进程状态
 	int state;
 	// 代权周转时间
-	int rightTime;
+	double rightTime;
 	//结束时间
 	int endTime;
 
@@ -40,8 +40,24 @@ public:
 	int static GeneratePriority();
 	//随机生成所需运行时间
 	int static GenerateNeedTime();
+	//运行结束后计算带权周转时间
+	void calRightTime();
 	
 	CString getState();
+	//将信息头输出
+	CString static GetCurrentProInfoHead();
+	CString static GetReadyProInfoHead();
+
+	//获取格式化输出数据
+	CString GetFormatPid();
+	CString GetFormatId();
+	CString GetFormatUserName();
+	CString GetFormatPriority();
+	CString GetFormatEnterTime();
+	CString GetFormatAllTime();
+	CString GetFormatRunTime();
+	CString GetFormatUsedTime();
+	CString GetFormatReadyTime();
 };
 
 #endif

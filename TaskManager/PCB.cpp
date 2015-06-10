@@ -64,3 +64,74 @@ CString PCB::getState()
 	}
 	return _T("未知");
 }
+
+void PCB::calRightTime(){
+	this->rightTime = (double)(endTime - enterTime) / usedTime;
+}
+
+CString PCB::GetCurrentProInfoHead(){
+	CString str;
+	str = "    PID   进程名   用户名   优先级   进入时间   所需时间   已运行时间   连续运行时间\r\n";
+	return str;
+}
+
+CString PCB::GetReadyProInfoHead(){
+	CString str;
+	str = "    PID   进程名   用户名   优先级   进入时间   所需时间   已运行时间   连续就绪时间\r\n";
+	return str;
+}
+
+CString PCB::GetFormatPid(){
+	CString pid;
+	pid.Format(_T("%3d"), this->pid);
+	return pid;
+}
+
+CString PCB::GetFormatId(){
+	CString id;
+	id.Format(_T("%3s"), this->id);
+	return id;
+}
+
+CString PCB::GetFormatUserName(){
+	CString userName;
+	userName.Format(_T("%3s"), this->userName);
+	return userName;
+}
+
+CString PCB::GetFormatPriority(){
+	CString priority;
+	priority.Format(_T("%3d"), this->priority);
+	return priority;
+}
+
+CString PCB::GetFormatEnterTime(){
+	CString enterTime;
+	enterTime.Format(_T("%4d"), this->enterTime);
+	return enterTime;
+}
+
+CString PCB::GetFormatAllTime(){
+	CString allTime;
+	allTime.Format(_T("%4d"), this->allTime);
+	return allTime;
+}
+
+CString PCB::GetFormatRunTime(){
+	CString runTime;
+	runTime.Format(_T("%5d"), this->runTime);
+	return runTime;
+}
+
+CString PCB::GetFormatUsedTime(){
+	CString usedTime;
+	usedTime.Format(_T("%5d"), this->usedTime);
+	return usedTime;
+}
+
+CString PCB::GetFormatReadyTime(){
+	CString readyTime;
+	readyTime.Format(__T("%5d"), this->readyTime);
+	return readyTime;
+}
+
