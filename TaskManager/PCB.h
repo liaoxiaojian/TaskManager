@@ -49,15 +49,6 @@ public:
 	CString static GetReadyProInfoHead();
 
 	//获取格式化输出数据
-	CString GetFormatPid();
-	CString GetFormatId();
-	CString GetFormatUserName();
-	CString GetFormatPriority();
-	CString GetFormatEnterTime();
-	CString GetFormatAllTime();
-	CString GetFormatRunTime();
-	CString GetFormatUsedTime();
-	CString GetFormatReadyTime();
 	CString GetCurrentProDetail();
 	CString GetReadyProDetail();
 };
