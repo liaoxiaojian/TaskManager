@@ -229,6 +229,11 @@ void TaskManagerMainDlg::OnBnClickedButtonNewTask()
 			mDialogNewTask.newTaskList.get(0)->enterTime = CPURunTime;
 			mDialogCurrenPro.mReadyProcess.add(mDialogNewTask.newTaskList.shift());
 		}
+		mDialogNewTask.tmpPid = mDialogNewTask.pid;
+	}
+	else
+	{
+		mDialogNewTask.pid = mDialogNewTask.tmpPid;//若取消，pid返回上个tmpId
 	}
 	//更新数据信息，并初始化一些变量
 	mDialogNewTask.ClearAll();
@@ -273,6 +278,7 @@ void TaskManagerMainDlg::Execute(){
 	CPURunTimeTextCtrl.SetWindowTextW(str);
 	PCB * finishedPCB;
 	finishedPCB = mDialogCurrenPro.Execute(decPriority, incPriority, CPURunTime);
+
 	if (finishedPCB != NULL){
 		finishedPCB->endTime = CPURunTime;
 		finishedPCB->calRightTime();

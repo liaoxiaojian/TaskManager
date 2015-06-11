@@ -58,6 +58,8 @@ public:
 	CString GetFormatRunTime();
 	CString GetFormatUsedTime();
 	CString GetFormatReadyTime();
+	CString GetCurrentProDetail();
+	CString GetReadyProDetail();
 };
 
 #endif

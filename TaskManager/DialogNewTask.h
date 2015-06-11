@@ -21,6 +21,8 @@ public:
 	enum { IDD = Dialog_New_Task };
 //pid数据
 	int pid;
+//辅助pid计数
+	int tmpPid;
 //进程名
 	CString id;
 //用户名
@@ -55,4 +57,5 @@ public:
 
 	// 释放资源，值初始化
 	void ClearAll();
+	virtual void OnCancel();
 };

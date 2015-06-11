@@ -28,6 +28,7 @@ public:
 	double CalAVGRightTime();//计算平均带权周转时间
 
 	virtual BOOL OnInitDialog();
+	virtual void OnCancel();
 };
 
 

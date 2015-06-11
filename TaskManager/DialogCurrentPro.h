@@ -73,6 +73,7 @@ public:
 
 	CString currentProHead;
 	CString readyProHead;
+
 	afx_msg void OnStnClickedAvgRightTime();
 };
 

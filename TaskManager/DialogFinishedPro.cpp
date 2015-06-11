@@ -49,8 +49,10 @@ void DialogFinishedPro::InitFinishedProList(CRect rect){
 
 void DialogFinishedPro::NotifyDataSetChange(){
 	int size = this->mFinishedProcess.size();
+
 	listFinishedProCtrl.SetRedraw(FALSE);
 	listFinishedProCtrl.DeleteAllItems();
+
 	for (int i = 0; i<size; i++){
 		PCB *pcb = this->mFinishedProcess.get(i);
 		listFinishedProCtrl.InsertItem(i, Util::IntToCString(pcb->pid));
@@ -63,6 +65,7 @@ void DialogFinishedPro::NotifyDataSetChange(){
 		listFinishedProCtrl.SetItemText(i, 7, Util::DoubleToCString(pcb->rightTime));
 		listFinishedProCtrl.SetItemText(i, 8, pcb->getState());
 	}
+
 	listFinishedProCtrl.SetRedraw(TRUE);
 	listFinishedProCtrl.Invalidate();
 	listFinishedProCtrl.UpdateWindow();
@@ -93,3 +96,8 @@ BOOL DialogFinishedPro::OnInitDialog()
 	return TRUE;  
 }
 
+
+void DialogFinishedPro::OnCancel()
+{
+	CDialogEx::OnCancel();
+}

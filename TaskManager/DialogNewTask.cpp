@@ -15,6 +15,7 @@ DialogNewTask::DialogNewTask(CWnd* pParent /*=NULL*/)
 	: CDialogEx(DialogNewTask::IDD, pParent)
 {
 	pid = 0;
+	tmpPid = 0;
 	newTaskList = LinkedList<PCB*>();
 }
 
@@ -116,4 +117,19 @@ void DialogNewTask::ClearAll()
 	userName = "";
 	priority = "";
 	allTime = "";
+	newTaskList.clear();
+}
+
+void DialogNewTask::OnCancel()
+{
+	id = "";
+	userName = "";
+	priority = "";
+	allTime = "";
+	//ÊÍ·Å×ÊÔ´
+	if (newTaskList.size() != 0){
+		delete(newTaskList.shift());
+	}
+
+	CDialogEx::OnCancel();
 }

@@ -65,6 +65,18 @@ CString PCB::getState()
 	return _T("δ֪");
 }
 
+CString PCB::GetCurrentProDetail(){
+	CString str;
+	str.Format(_T("    %-3d   %-6s   %-6s   %-6d   %-8d   %-8d   %-10d   %-12d\r\n"), pid, id, userName, priority, enterTime, allTime, usedTime, runTime);
+	return str;
+}
+
+CString PCB::GetReadyProDetail(){
+	CString str;
+	str.Format(_T("    %-3d   %-6s   %-6s   %-6d   %-8d   %-8d   %-10d   %-12d\r\n"), pid, id, userName, priority, enterTime, allTime, usedTime, readyTime);
+	return str;
+}
+
 void PCB::calRightTime(){
 	this->rightTime = (double)(endTime - enterTime) / usedTime;
 }
@@ -89,43 +101,43 @@ CString PCB::GetFormatPid(){
 
 CString PCB::GetFormatId(){
 	CString id;
-	id.Format(_T("%3s"), this->id);
+	id.Format(_T("%6s"), this->id);
 	return id;
 }
 
 CString PCB::GetFormatUserName(){
 	CString userName;
-	userName.Format(_T("%3s"), this->userName);
+	userName.Format(_T("%6s"), this->userName);
 	return userName;
 }
 
 CString PCB::GetFormatPriority(){
 	CString priority;
-	priority.Format(_T("%3d"), this->priority);
+	priority.Format(_T("%6d"), this->priority);
 	return priority;
 }
 
 CString PCB::GetFormatEnterTime(){
 	CString enterTime;
-	enterTime.Format(_T("%4d"), this->enterTime);
+	enterTime.Format(_T("%8d"), this->enterTime);
 	return enterTime;
 }
 
 CString PCB::GetFormatAllTime(){
 	CString allTime;
-	allTime.Format(_T("%4d"), this->allTime);
+	allTime.Format(_T("%8d"), this->allTime);
 	return allTime;
 }
 
 CString PCB::GetFormatRunTime(){
 	CString runTime;
-	runTime.Format(_T("%5d"), this->runTime);
+	runTime.Format(_T("%10d"), this->runTime);
 	return runTime;
 }
 
 CString PCB::GetFormatUsedTime(){
 	CString usedTime;
-	usedTime.Format(_T("%5d"), this->usedTime);
+	usedTime.Format(_T("%12d"), this->usedTime);
 	return usedTime;
 }
 

@@ -1,6 +1,5 @@
 // DialogCurrentPro.cpp : 实现文件
 //
-
 #include "stdafx.h"
 #include "TaskManager.h"
 #include "DialogCurrentPro.h"
@@ -156,12 +155,8 @@ PCB* DialogCurrentPro::Execute(int decPriority,int incPriority,int cpuRunTime)
 	//文件读写
 	if (mCurrentProcess != NULL){
 		WriteCurrentProToFile(cpuRunTime);
-		file.Write(_T("\r\n"), 4);
 		WriteReadyProToFile();
-		file.Write(_T("\r\n"), 4);
-		file.Flush();
 	}
-	
 	return finishedPCB;
 }
 
@@ -255,7 +250,6 @@ void DialogCurrentPro::UpdateListCPRO()
 	ListCurrentProCtrl.UpdateWindow();
 }
 
-
 // 更新就绪列表
 void DialogCurrentPro::UpdateListReady()
 {
@@ -266,115 +260,27 @@ void DialogCurrentPro::WriteCurrentProToFile(int cpuRunTime){
 	CString cpuState;
 	cpuState.Format(_T("第%d个时间片:\r\n"), cpuRunTime);
 	file.Write(cpuState, cpuState.GetLength() << 1);
+
 	file.Write(_T("CPU进程:\r\n"), 16);
 	file.Write(currentProHead, currentProHead.GetLength() << 1);
-	int position = file.GetLength();//获取每一行的开头位置
-	int length = currentProHead.GetLength();
-	//file.Write(currentProHead, currentProHead.GetLength() << 1);
-	for (int i = 0; i <length; i++){
-		file.Write(_T(" "), 2);
-	}
-	//写pid
-	position += 4 << 1;
-	file.Seek(position, CFile::begin);
-	CString pid = mCurrentProcess->GetFormatPid();
-	file.Write(pid, pid.GetLength() << 1);
-	//写进程名
-	position += 6 << 1;
-	file.Seek(position, CFile::begin);
-	CString id = mCurrentProcess->GetFormatId();
-	file.Write(id, id.GetLength() << 1);
-	//写用户名
-	position += 6 << 1;
-	file.Seek(position, CFile::begin);
-	CString userName = mCurrentProcess->GetFormatUserName();
-	file.Write(userName, userName.GetLength() << 1);
-	//写优先级
-	position += 6 << 1;
-	file.Seek(position, CFile::begin);
-	CString priority = mCurrentProcess->GetFormatPriority();
-	file.Write(priority, priority.GetLength() << 1);
-	//写进入时间
-	position += 6 << 1;
-	file.Seek(position, CFile::begin);
-	CString enterTime = mCurrentProcess->GetFormatEnterTime();
-	file.Write(enterTime, enterTime.GetLength() << 1);
-	//写所需时间
-	position += 7 << 1;
-	file.Seek(position, CFile::begin);
-	CString allTime = mCurrentProcess->GetFormatAllTime();
-	file.Write(allTime, allTime.GetLength() << 1);
-	//写已运行时间
-	position += 7 << 1;
-	file.Seek(position, CFile::begin);
-	CString usedTime = mCurrentProcess->GetFormatUsedTime();
-	file.Write(usedTime, usedTime.GetLength() << 1);
-	//写连续运行时间
-	position += 8 << 1;
-	file.Seek(position, CFile::begin);
-	CString runTime = mCurrentProcess->GetFormatRunTime();
-	file.Write(runTime, runTime.GetLength() << 1);
+
+	CString str = mCurrentProcess->GetCurrentProDetail();
+	file.Write(str, str.GetLength() << 1);
+
 }
 
 void DialogCurrentPro::WriteReadyProToFile(){
+	
 	CString head = _T("等待进程:\r\n");
-	int b = file.GetLength();
-	file.Write(head,head.GetLength()<<1);
+	file.Write(head, head.GetLength() << 1);
 	file.Write(readyProHead, readyProHead.GetLength() << 1);
-	int length = readyProHead.GetLength();
+
 	int size = mReadyProcess.size();
 	for (int i = 0; i < size; i++){
-		PCB* readyPro = mReadyProcess.get(i);
-		int position = file.GetLength();//获取每一行的开头位置
-		for (int j = 0; j<length; j++){
-			file.Write(_T(" "), 2);
-		}
-		//写pid
-		position += 4 << 1;
-		file.Seek(position, CFile::begin);
-		CString pid = readyPro->GetFormatPid();
-		file.Write(pid, pid.GetLength() << 1);
-		//写进程名
-		position += 6 << 1;
-		file.Seek(position, CFile::begin);
-		CString id = readyPro->GetFormatId();
-		file.Write(id, id.GetLength() << 1);
-		//写用户名
-		position += 6 << 1;
-		file.Seek(position, CFile::begin);
-		CString userName = readyPro->GetFormatUserName();
-		file.Write(userName, userName.GetLength() << 1);
-		//写优先级
-		position += 6 << 1;
-		file.Seek(position, CFile::begin);
-		CString priority = readyPro->GetFormatPriority();
-		file.Write(priority, priority.GetLength() << 1);
-		//写进入时间
-		position += 6 << 1;
-		file.Seek(position, CFile::begin);
-		CString enterTime = readyPro->GetFormatEnterTime();
-		file.Write(enterTime, enterTime.GetLength() << 1);
-		//写所需时间
-		position += 7 << 1;
-		file.Seek(position, CFile::begin);
-		CString allTime = readyPro->GetFormatAllTime();
-		file.Write(allTime, allTime.GetLength() << 1);
-		//写已运行时间
-		position += 7 << 1;
-		file.Seek(position, CFile::begin);
-		CString usedTime = readyPro->GetFormatUsedTime();
-		file.Write(usedTime, usedTime.GetLength() << 1);
-		//写连续等待时间
-		position += 8 << 1;
-		file.Seek(position, CFile::begin);
-		CString readyTime = readyPro->GetFormatReadyTime();
-		file.Write(readyTime, readyTime.GetLength() << 1);
-
-		CString end = _T("\r\n");
-		file.Write(end,end.GetLength()<<1);
+		CString str = mReadyProcess.get(i)->GetReadyProDetail();
+		file.Write(str, str.GetLength() << 1);
 	}
 }
-
 
 BOOL DialogCurrentPro::DestroyWindow()
 {
