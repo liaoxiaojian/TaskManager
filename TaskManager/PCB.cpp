@@ -59,6 +59,10 @@ CString PCB::getState()
 		return _T("运行");
 	case FINISHED:
 		return _T("结束");
+	case INTERUPT:
+		return _T("强行结束");
+	case WAITING_FINISHED:
+		return _T("等待退出");
 	default:
 		break;
 	}
@@ -78,7 +82,8 @@ CString PCB::GetReadyProDetail(){
 }
 
 void PCB::calRightTime(){
-	this->rightTime = (double)(endTime - enterTime) / usedTime;
+	if (this->usedTime == 0) this->rightTime = 0;//若运行时间为0，则带权周转时间为0
+	else this->rightTime = (double)(endTime - enterTime) / usedTime;
 }
 
 CString PCB::GetCurrentProInfoHead(){

@@ -58,4 +58,6 @@ public:
 	// 释放资源，值初始化
 	void ClearAll();
 	virtual void OnCancel();
+	afx_msg void OnNMRClickNewTaskQ(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnDelete();
 };

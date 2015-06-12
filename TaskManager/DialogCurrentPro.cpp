@@ -40,11 +40,13 @@ void DialogCurrentPro::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(DialogCurrentPro, CDialogEx)
+	ON_NOTIFY(NM_CLICK, List_Current_Pro, &DialogCurrentPro::OnNMClickCurrentPro)
+	ON_NOTIFY(NM_CLICK, List_Pro_Queue, &DialogCurrentPro::OnNMClickProQueue)
 END_MESSAGE_MAP()
 
 void DialogCurrentPro::IninListCurrentPro(CRect rect){
 	ListCurrentProCtrl.GetClientRect(&rect);
-	ListCurrentProCtrl.SetExtendedStyle(ListCurrentProCtrl.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	ListCurrentProCtrl.SetExtendedStyle(ListCurrentProCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES|LVS_EX_FULLROWSELECT  );
 	ListCurrentProCtrl.InsertColumn(0, _T("PID"), LVCFMT_CENTER, rect.Width() / 9, 0);
 	ListCurrentProCtrl.InsertColumn(1, _T("进程名"), LVCFMT_CENTER, rect.Width() / 9, 1);
 	ListCurrentProCtrl.InsertColumn(2, _T("用户名"), LVCFMT_CENTER, rect.Width() / 9, 2);
@@ -97,6 +99,9 @@ void DialogCurrentPro::NotifyDataSetChange()
 		ListProQCtrl.SetItemText(i, 6, Util::IntToCString(pcb->usedTime));
 		ListProQCtrl.SetItemText(i, 7, Util::IntToCString(pcb->readyTime));
 		ListProQCtrl.SetItemText(i, 8, pcb->getState());
+		if (Util::IntToCString(pcb->pid) == tmpPidReady){
+			ListProQCtrl.SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+		}
 	}
 	ListProQCtrl.SetRedraw(TRUE);
 	ListProQCtrl.Invalidate();
@@ -156,6 +161,17 @@ PCB* DialogCurrentPro::Execute(int decPriority,int incPriority,int cpuRunTime)
 	if (mCurrentProcess != NULL){
 		WriteCurrentProToFile(cpuRunTime);
 		WriteReadyProToFile();
+	}
+
+	if (mCurrentProcess !=NULL&&mCurrentProcess->state == WAITING_FINISHED){
+		finishedPCB = mCurrentProcess;//当前进程退出
+		
+		//选择下一个进程
+		int pos = GetCandidatePos();
+		mCurrentProcess = mReadyProcess.remove(pos);
+		if (mCurrentProcess != NULL) {
+			mCurrentProcess->state = RUNNING;
+		}
 	}
 	return finishedPCB;
 }
@@ -224,7 +240,6 @@ void DialogCurrentPro::UpdateReadyPro(int incPriority)
 		{
 			mReadyProcess.get(i)->priority += incPriority;
 		}
-
 		mReadyProcess.get(i)->readyTime++;//连续就绪时间增加
 	}
 }
@@ -245,6 +260,9 @@ void DialogCurrentPro::UpdateListCPRO()
 	ListCurrentProCtrl.SetItemText(0, 6, Util::IntToCString(mCurrentProcess->usedTime));
 	ListCurrentProCtrl.SetItemText(0, 7, Util::IntToCString(mCurrentProcess->runTime));
 	ListCurrentProCtrl.SetItemText(0, 8, mCurrentProcess->getState());
+	if (Util::IntToCString(mCurrentProcess->pid) == tmpPidCurrent){
+		ListCurrentProCtrl.SetItemState(0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+	}
 	ListCurrentProCtrl.SetRedraw(TRUE);
 	ListCurrentProCtrl.Invalidate();
 	ListCurrentProCtrl.UpdateWindow();
@@ -287,4 +305,24 @@ BOOL DialogCurrentPro::DestroyWindow()
 	file.Close();
 	return CDialogEx::DestroyWindow();
 }
+
+//正在运行进程某项被左键点击
+void DialogCurrentPro::OnNMClickCurrentPro(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	POSITION p = ListCurrentProCtrl.GetFirstSelectedItemPosition();
+	tmpPidCurrent = ListCurrentProCtrl.GetItemText((int)p - 1, 0);
+	*pResult = 0;
+}
+
+//就绪队列进程某项被左键点击
+void DialogCurrentPro::OnNMClickProQueue(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	POSITION p = ListProQCtrl.GetFirstSelectedItemPosition();
+	tmpPidReady = ListProQCtrl.GetItemText((int)p - 1, 0);
+	*pResult = 0;
+}
+
+
 

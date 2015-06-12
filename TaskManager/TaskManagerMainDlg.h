@@ -41,7 +41,6 @@ public:
 
 	int clickTimes = 0;//cpu控制键的点击次数
 
-
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
@@ -58,6 +57,7 @@ protected:
 public:
 
 	void Execute();
+	void FinishTask();
 
 	afx_msg void OnTcnSelchange(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedButtonSettings();
@@ -65,6 +65,7 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedButtonStopCpu();
 	afx_msg void OnBnClickedButtonStepIn();
+	afx_msg void OnBnClickedButtonFinishTask();
 
 	//Tab栏切换控制
 	CTabCtrl tabControl;

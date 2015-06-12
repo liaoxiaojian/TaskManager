@@ -3,7 +3,6 @@
 #ifndef DIALOG_CURRENT_PRO_H
 #define DIALOG_CURRENT_PRO_H
 
-#include "ListViewCurrentPro.h"
 #include "Util.h"
 #include "LinkedList.h"
 #include "PCB.h"
@@ -28,6 +27,8 @@ public:
 
 	int continueRunTimeSlots;
 	int tmp;//记录连续运行的时间片的个数
+	CString tmpPidCurrent;//辅助记录选中项的pid
+	CString tmpPidReady;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
@@ -75,6 +76,11 @@ public:
 	CString readyProHead;
 
 	afx_msg void OnStnClickedAvgRightTime();
+	afx_msg void OnNMClickCurrentPro(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnNMClickProQueue(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnNMRClickCurrentPro(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnNMRClickProQueue(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnFinishTask();
 };
 
 #endif 

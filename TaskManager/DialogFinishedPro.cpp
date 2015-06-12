@@ -71,7 +71,7 @@ void DialogFinishedPro::NotifyDataSetChange(){
 	listFinishedProCtrl.UpdateWindow();
 
 	CString str;
-	str.Format(_T("平均代权周转时间%f"),CalAVGRightTime());
+	str.Format(_T("平均带权周转时间%f"),CalAVGRightTime());
 	textAVGRightTimeCtrl.SetWindowTextW(str);
 	textAVGRightTimeCtrl.Invalidate();
 	textAVGRightTimeCtrl.UpdateWindow();

@@ -35,7 +35,8 @@ void DialogNewTask::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(DialogNewTask, CDialogEx)
 	ON_BN_CLICKED(New_Task_Button_Add_To_List, &DialogNewTask::OnBnClickedTaskButtonAddToList)
-	ON_BN_CLICKED(IDOK, &DialogNewTask::OnBnClickedOk)
+	ON_NOTIFY(NM_RCLICK, List_New_Task_Q, &DialogNewTask::OnNMRClickNewTaskQ)
+	ON_COMMAND(ID_DELETE, &DialogNewTask::OnDelete)
 END_MESSAGE_MAP()
 
 
@@ -58,6 +59,7 @@ void DialogNewTask::InitListNewTaskQ(CRect rect)
 	listNewTaskQCtrl.InsertColumn(2, _T("用户名"), LVCFMT_CENTER, rect.Width() / 5, 2);
 	listNewTaskQCtrl.InsertColumn(3, _T("优先级"), LVCFMT_CENTER, rect.Width() / 5, 3);
 	listNewTaskQCtrl.InsertColumn(5, _T("所需时间"), LVCFMT_CENTER, rect.Width() / 5, 4);
+
 }
 
 //添加到列表点击事件
@@ -69,6 +71,7 @@ void DialogNewTask::OnBnClickedTaskButtonAddToList()
 // 添加任务到列表
 void DialogNewTask::AddItemToList()
 {
+
 	processNameCtrl.GetWindowTextW(id);
 	userNameCtrl.GetWindowTextW(userName);
 	priorityCtrl.GetWindowTextW(priority);
@@ -104,10 +107,32 @@ void DialogNewTask::AddItemToList()
 
 }
 
-//确认键被点击后
-void DialogNewTask::OnBnClickedOk()
+//某项单击右键 
+void DialogNewTask::OnNMRClickNewTaskQ(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	CDialogEx::OnOK();
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	CMenu m, *pm;
+	if (!m.LoadMenu(Menu_New_Task)) MessageBox(_T("err"));//IDR_MENU1是相应的资源id
+	pm = m.GetSubMenu(0); //获取子对话框
+	CPoint pot;
+	GetCursorPos(&pot);//获取鼠标当前位置
+	pm->TrackPopupMenu(TPM_LEFTALIGN, pot.x, pot.y, this);//在鼠标位置弹出菜单
+	*pResult = 0;
+}
+
+//删除点击 
+void DialogNewTask::OnDelete()
+{
+	for (int i = 0; i<listNewTaskQCtrl.GetItemCount(); i++)
+	{
+		if (listNewTaskQCtrl.GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED)
+		{
+			newTaskList.remove( i);
+			listNewTaskQCtrl.DeleteItem(i);
+			listNewTaskQCtrl.Invalidate();
+			i = 0;
+		}
+	}
 }
 
 // 释放资源，值初始化
@@ -133,3 +158,5 @@ void DialogNewTask::OnCancel()
 
 	CDialogEx::OnCancel();
 }
+
+

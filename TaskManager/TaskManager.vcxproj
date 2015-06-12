@@ -96,15 +96,11 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="DialogCurrentPro.h" />
     <ClInclude Include="DialogFinishedPro.h" />
     <ClInclude Include="DialogNewTask.h" />
     <ClInclude Include="DialogSettings.h" />
     <ClInclude Include="LinkedList.h" />
-    <ClInclude Include="ListViewCurrentPro.h" />
     <ClInclude Include="PCB.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -118,7 +114,6 @@
     <ClCompile Include="DialogFinishedPro.cpp" />
     <ClCompile Include="DialogNewTask.cpp" />
     <ClCompile Include="DialogSettings.cpp" />
-    <ClCompile Include="ListViewCurrentPro.cpp" />
     <ClCompile Include="PCB.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -139,7 +134,9 @@
     <Image Include="res\TaskManager.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="res\windows.manifest" />
+    <Manifest Include="res\windows.manifest">
+      <SubType>Designer</SubType>
+    </Manifest>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

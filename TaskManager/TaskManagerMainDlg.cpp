@@ -74,6 +74,7 @@ BEGIN_MESSAGE_MAP(TaskManagerMainDlg, CDialogEx)
 	ON_BN_CLICKED(Main_Button_New_Task, &TaskManagerMainDlg::OnBnClickedButtonNewTask)
 	ON_BN_CLICKED(Main_Button_Stop_CPU, &TaskManagerMainDlg::OnBnClickedButtonStopCpu)
 	ON_BN_CLICKED(Main_Button_Step_In, &TaskManagerMainDlg::OnBnClickedButtonStepIn)
+	ON_BN_CLICKED(Main_Button_Finish_Task, &TaskManagerMainDlg::OnBnClickedButtonFinishTask)
 END_MESSAGE_MAP()
 
 // TaskManagerMainDlg 消息处理程序
@@ -105,7 +106,6 @@ BOOL TaskManagerMainDlg::OnInitDialog()
 
 	ShowWindow(SW_MINIMIZE);
 
-	// TODO:  在此添加额外的初始化代码
 	CRect tabRect;//
 
 	//添加Tab选项
@@ -280,9 +280,46 @@ void TaskManagerMainDlg::Execute(){
 	finishedPCB = mDialogCurrenPro.Execute(decPriority, incPriority, CPURunTime);
 
 	if (finishedPCB != NULL){
+		if (finishedPCB->state == WAITING_FINISHED) finishedPCB->state = INTERUPT;
 		finishedPCB->endTime = CPURunTime;
 		finishedPCB->calRightTime();
 		mDialogFinishedPro.mFinishedProcess.add(finishedPCB);
 		mDialogFinishedPro.NotifyDataSetChange();
 	}
+
 }
+
+void TaskManagerMainDlg::FinishTask(){
+	POSITION p1 = mDialogCurrenPro.ListProQCtrl.GetFirstSelectedItemPosition();//就绪队列是否有选中的
+	if (p1 == NULL) {
+		POSITION p2 = mDialogCurrenPro.ListCurrentProCtrl.GetFirstSelectedItemPosition();
+		if (p2 == NULL){//正在运行是否有选中
+			return;
+		}
+		else
+		{
+			CString selectedPid = mDialogCurrenPro.ListCurrentProCtrl.GetItemText((int)p2 - 1, 0);
+			mDialogCurrenPro.mCurrentProcess->state = WAITING_FINISHED;
+			mDialogCurrenPro.UpdateListCPRO();
+		}
+	}
+	else
+	{
+		CString selectedPid = mDialogCurrenPro.ListProQCtrl.GetItemText((int)p1 - 1, 0);
+		PCB* pcb = mDialogCurrenPro.mReadyProcess.remove((int)p1 - 1);
+		if (pcb != NULL){
+			pcb->endTime = CPURunTime;
+			pcb->state = INTERUPT;
+			pcb->calRightTime();
+			mDialogFinishedPro.mFinishedProcess.add(pcb);
+			mDialogFinishedPro.NotifyDataSetChange();
+			mDialogCurrenPro.NotifyDataSetChange();
+		}
+	}
+}
+//结束任务
+void TaskManagerMainDlg::OnBnClickedButtonFinishTask()
+{
+	FinishTask();
+}
+

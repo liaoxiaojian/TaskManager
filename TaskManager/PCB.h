@@ -5,6 +5,8 @@
 #define READY 0//就绪
 #define RUNNING 1//运行
 #define FINISHED 2//结束
+#define INTERUPT 3//强行结束
+#define WAITING_FINISHED  4//等待退出
 
 class PCB
 {
